@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:FlutterGalleryApp/main.dart';
 import 'package:FlutterGalleryApp/res/app_icons.dart';
 import 'package:FlutterGalleryApp/res/colors.dart';
-import 'package:FlutterGalleryApp/screens/demo_screen.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 
@@ -73,15 +72,9 @@ class _HomeState extends State<Home> {
       bottomNavigationBar: BottomNavyBar(
           itemCornerRadius: 8,
           onItemSelected: (int index) async {
-            if (index == 1) {
-              var value = await Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => DemoScreen()));
-              print(value);
-            } else {
-              setState(() {
-                currentTab = index;
-              });
-            }
+            setState(() {
+              currentTab = index;
+            });
           },
           curve: Curves.ease,
           currentTab: currentTab,
