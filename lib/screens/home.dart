@@ -1,12 +1,17 @@
+import 'dart:async';
+
+import 'package:FlutterGalleryApp/main.dart';
 import 'package:FlutterGalleryApp/res/app_icons.dart';
 import 'package:FlutterGalleryApp/res/colors.dart';
+import 'package:FlutterGalleryApp/screens/demo_screen.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 
 import 'feed_screen.dart';
 
 class Home extends StatefulWidget {
-  Home({Key key}) : super(key: key);
-
+  Home(this.controller);
+  final Stream<ConnectivityResult> controller;
   @override
   _HomeState createState() => _HomeState();
 }
@@ -14,18 +19,72 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   int currentTab = 0;
   List<Widget> pages = [Feed(), Container(), Container()];
+  StreamSubscription subscription;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    subscription = widget.controller.listen((ConnectivityResult result) {
+      switch (result) {
+        case ConnectivityResult.wifi:
+          ConnectivityOverlay overlay = ConnectivityOverlay();
+          overlay.removeOverlay(context);
+          break;
+        case ConnectivityResult.mobile:
+          ConnectivityOverlay overlay = ConnectivityOverlay();
+          overlay.removeOverlay(context);
+          break;
+        case ConnectivityResult.none:
+          ConnectivityOverlay overlay = ConnectivityOverlay();
+          overlay.showOverlay(
+              context,
+              Positioned(
+                top: MediaQuery.of(context).viewInsets.top + 50,
+                child: Material(
+                  color: Colors.transparent,
+                  child: Container(
+                    alignment: Alignment.center,
+                    width: MediaQuery.of(context).size.width,
+                    child: Container(
+                      margin: EdgeInsets.symmetric(horizontal: 20),
+                      padding: EdgeInsets.fromLTRB(16, 10, 16, 10),
+                      child: Text('No internet connection'),
+                      decoration: BoxDecoration(
+                          color: AppColors.mercury,
+                          borderRadius: BorderRadius.circular(12.0)),
+                    ),
+                  ),
+                ),
+              ));
+          break;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    subscription.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: BottomNavyBar(
           itemCornerRadius: 8,
-          onItemSelected: (int index) {
-            setState(() {
-              currentTab = index;
-            });
+          onItemSelected: (int index) async {
+            if (index == 1) {
+              var value = await Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => DemoScreen()));
+              print(value);
+            } else {
+              setState(() {
+                currentTab = index;
+              });
+            }
           },
           curve: Curves.ease,
+          currentTab: currentTab,
           items: [
             BottomNavyBarItem(
               asset: AppIcons.home,
@@ -136,7 +195,7 @@ class _ItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: animationDuration,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       width: isSelected
           ? 150
           : (MediaQuery.of(context).size.width - 150 - 8 * 4 - 4 * 2) / 2,

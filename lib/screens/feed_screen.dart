@@ -9,6 +9,7 @@ const String kFlutterDash =
 const String kName = 'Bykov Konstantin';
 const String kUserName = 'bykov';
 const String kDescription = 'This is flutter dash';
+const String heroTag = 'heroTag';
 
 class Feed extends StatefulWidget {
   Feed({Key key}) : super(key: key);
@@ -26,7 +27,7 @@ class _FeedState extends State<Feed> {
           itemBuilder: (BuildContext context, int index) {
             return Column(
               children: [
-                _buildItem(),
+                _buildItem(index),
                 Divider(
                   thickness: 2,
                   color: AppColors.mercury,
@@ -37,13 +38,24 @@ class _FeedState extends State<Feed> {
     );
   }
 
-  Widget _buildItem() {
+  Widget _buildItem(int index) {
+    final heroTag = 'feedItem_$index';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         GestureDetector(
             onTap: () {
-              Navigator.push(
+              Navigator.pushNamed(context, '/fullScreenImage',
+                  arguments: FullScreenImageArguments(
+                      routeSettings: RouteSettings(
+                        arguments: 'Some title',
+                      ),
+                      photo: kFlutterDash,
+                      name: kName,
+                      userName: kUserName,
+                      altDescription: kDescription,
+                      heroTag: heroTag));
+              /*Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (context) => FullScreenImage(
@@ -51,9 +63,9 @@ class _FeedState extends State<Feed> {
                             name: kName,
                             userName: kUserName,
                             altDescription: kDescription,
-                          )));
+                          )));*/
             },
-            child: Photo(photoLink: kFlutterDash)),
+            child: Hero(tag: heroTag, child: Photo(photoLink: kFlutterDash))),
         _buildPhotMeta(),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),

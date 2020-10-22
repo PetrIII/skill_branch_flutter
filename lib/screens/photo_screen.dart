@@ -1,7 +1,30 @@
 import 'package:FlutterGalleryApp/res/res.dart';
+import 'package:FlutterGalleryApp/screens/feed_screen.dart';
 import 'package:FlutterGalleryApp/widgets/widgets.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:gallery_saver/gallery_saver.dart';
+
+class FullScreenImageArguments {
+  FullScreenImageArguments({
+    this.photo,
+    this.name,
+    this.userName,
+    this.altDescription,
+    this.userPhoto,
+    this.heroTag,
+    this.routeSettings,
+    this.key,
+  });
+  final String photo;
+  final String name;
+  final String userName;
+  final String altDescription;
+  final String userPhoto;
+  final String heroTag;
+  final RouteSettings routeSettings;
+  final Key key;
+}
 
 class FullScreenImage extends StatefulWidget {
   FullScreenImage(
@@ -49,15 +72,45 @@ class _FullScreenImageState extends State<FullScreenImage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: Icon(CupertinoIcons.back),
-        title: Text(
-          'Photo',
-          style: AppStyles.h2Black,
-        ),
-        centerTitle: true,
-      ),
+      appBar: _buildAppBar(),
       body: _buildItem(),
+    );
+  }
+
+  AppBar _buildAppBar() {
+    //String title = ModalRoute.of(context).settings.arguments;
+    return AppBar(
+      elevation: 0,
+      leading: IconButton(
+        icon: Icon(
+          CupertinoIcons.back,
+          color: AppColors.grayChateau,
+        ),
+        onPressed: () => {Navigator.pop(context)},
+      ),
+      title: Text(
+        'Photo',
+        style: AppStyles.h2Black,
+      ),
+      actions: [
+        IconButton(
+          icon: Icon(
+            Icons.more_vert,
+            color: AppColors.grayChateau,
+          ),
+          onPressed: () {
+            showModalBottomSheet(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                context: context,
+                builder: (context) {
+                  return ClaimBottomSheet();
+                });
+          },
+        ),
+      ],
+      centerTitle: true,
+      backgroundColor: AppColors.white,
     );
   }
 
@@ -78,7 +131,13 @@ class _FullScreenImageState extends State<FullScreenImage>
               overflow: TextOverflow.ellipsis,
               style: AppStyles.h3.copyWith(color: Color(0xFFB2BBC6))),
         ),
+        const SizedBox(
+          height: 9,
+        ),
         _buildPhotMeta(),
+        const SizedBox(
+          height: 17,
+        ),
         _buildButtons()
       ],
     );
@@ -100,6 +159,16 @@ class _FullScreenImageState extends State<FullScreenImage>
     );
   }
 
+  Future _saveNetworkImage() async {
+    String path =
+        'https://image.shutterstock.com/image-photo/montreal-canada-july-11-2019-600w-1450023539.jpg';
+    GallerySaver.saveImage(path).then((bool success) {
+      setState(() {
+        print('Image is saved');
+      });
+    });
+  }
+
   Widget _buildButtons() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -112,29 +181,80 @@ class _FullScreenImageState extends State<FullScreenImage>
               isLiked: true,
             ),
           ),
-          Container(
-            width: 105,
-            height: 36,
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(7.0),
-                color: Color(0xFF39CEFD)),
-            child: Align(alignment: Alignment.center, child: Text('Save')),
+          _buildButton(
+            'Save',
+            () {
+              showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                        title: Text('download photos'),
+                        content:
+                            Text('Are you sure you want to download a photo?'),
+                        actions: [
+                          FlatButton(
+                            onPressed: () {
+                              _saveNetworkImage()
+                                  .then((_) => Navigator.of(context).pop());
+                            },
+                            child: Text('Download'),
+                          ),
+                          FlatButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: Text('Close'),
+                          )
+                        ],
+                      ));
+            },
           ),
           SizedBox(
             width: 12,
           ),
-          Container(
-            width: 105,
-            height: 36,
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(7.0),
-                color: Color(0xFF39CEFD)),
-            child: Align(alignment: Alignment.center, child: Text('Visit')),
-          ),
+          _buildButton('Visit', () async {
+            OverlayState overlayState = Overlay.of(context);
+            OverlayEntry overlayEntry =
+                OverlayEntry(builder: (BuildContext context) {
+              return Positioned(
+                top: MediaQuery.of(context).viewInsets.top + 50,
+                child: Material(
+                  color: Colors.transparent,
+                  child: Container(
+                    alignment: Alignment.center,
+                    width: MediaQuery.of(context).size.width,
+                    child: Container(
+                      margin: EdgeInsets.symmetric(horizontal: 20),
+                      padding: EdgeInsets.fromLTRB(16, 10, 16, 10),
+                      child: Text('SkillBrunch'),
+                      decoration: BoxDecoration(
+                          color: AppColors.mercury,
+                          borderRadius: BorderRadius.circular(12.0)),
+                    ),
+                  ),
+                ),
+              );
+            });
+            overlayState.insert(overlayEntry);
+            await Future.delayed(Duration(seconds: 1));
+            overlayEntry.remove();
+          }),
         ],
       ),
     );
   }
+}
+
+Widget _buildButton(String text, VoidCallback callback) {
+  return GestureDetector(
+    onTap: callback,
+    child: Container(
+      width: 105,
+      height: 36,
+      decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(7.0), color: Color(0xFF39CEFD)),
+      child: Align(alignment: Alignment.center, child: Text(text)),
+    ),
+  );
 }
 
 class StaggerAnimation extends StatelessWidget {
